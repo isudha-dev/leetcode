@@ -1,47 +1,327 @@
 package leetcode;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ListProblems {
-
+//    -1,-7,7,-4,19,6,-9,-5,-2,-5
     public static void main(String[] args) {
-        // 3,0,2,6,8,1,7,9,4,2,5,5,0
-        ListNode head = new ListNode(1);
-        ListNode temp = head;
-        temp.next = new ListNode(2);
+        int a = -1;
+        System.out.println(a>>>31>0);
+
+        ListNode head1 = new ListNode(1);
+        ListNode temp = head1;
+        temp.next = new ListNode(4);
+        temp = temp.next;
+        temp.next = new ListNode(5);
+
+        ListNode head2 = new ListNode(1);
+        temp = head2;
+        temp.next = new ListNode(3);
         temp = temp.next;
         temp.next = new ListNode(4);
 
-        ListNode head2 = new ListNode(1);
-        ListNode temp2 = head2;
-        temp2.next = new ListNode(3);
-        temp2 = temp2.next;
-        temp2.next = new ListNode(4);
-//        temp = temp.next;
-//        temp.next = new ListNode(1);
-//        temp = temp.next;
-//        temp.next = new ListNode(7);
-//        temp = temp.next;
-//        temp.next = new ListNode(9);
-//        temp = temp.next;
-//        temp.next = new ListNode(4);
-//        temp = temp.next;
-//        temp.next = new ListNode(2);
-//        temp = temp.next;
-//        temp.next = new ListNode(5);
-//        temp = temp.next;
-//        temp.next = new ListNode(5);
-//        temp = temp.next;
-//        temp.next = new ListNode(0);
-//        temp = temp.next;
-//        temp.next = new ListNode(0);
-//        temp = temp.next;
-//        temp.next = new ListNode(1);
-//        temp = temp.next;
-//        temp.next = new ListNode(0);
-        mergeTwoLists(head, head2);
+        ListNode head3 = new ListNode(2);
+        temp = head3;
+        temp.next = new ListNode(6);
+
+        ListNode[] lists = new ListNode[] {head1, head2, head3};
+
+        mergeKLists(lists);
+
+    }
+
+    static class Pair<T, U> {
+        private T first;
+        private U second;
+
+        public Pair(T first, U second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        public T getFirst() { return first; }
+        public U getSecond() { return second; }
+
+        public void setFirst(T first) { this.first = first; }
+        public void setSecond(U second) { this.second = second; }
+
+        @Override
+        public String toString() {
+            return "(" + first + ", " + second + ")";
+        }
+    }
+
+    // LC23
+    public static ListNode mergeKLists(ListNode[] lists) {
+        if(lists.length == 0)
+            return null;
+
+        if(lists.length == 1)
+            return lists[0];
+
+        PriorityQueue<Pair<Integer, Integer>> pq = new PriorityQueue<>(Comparator.comparingInt(l -> l.getFirst()));
+
+        for(int i = 0; i< lists.length; i++) {
+            if(lists[i] != null) {
+                pq.add(new Pair<>(lists[i].val, i));
+            }
+        }
+
+        if(pq.size() == 0) {
+            return null;
+        }
+        ListNode ans, temp;
+        Pair<Integer, Integer> top = pq.poll();
+        int second = top.getSecond();
+        ans = lists[second];
+        temp = ans;
+        if(temp.next != null) {
+            lists[second] = lists[second].next;
+            pq.add(new Pair<>(temp.next.val, top.getSecond()));
+        }
+
+        while (!pq.isEmpty()) {
+            top = pq.poll();
+            second = top.getSecond();
+            temp.next = lists[second];
+            lists[second] = lists[second].next;
+
+            if(lists[second] != null) {
+                pq.add(new Pair<>(lists[second].val, second));
+            }
+
+            temp = temp.next;
+        }
+        
+        return ans;
+
+    }
+
+    // LC328
+    public static ListNode oddEvenList(ListNode head) {
+        ListNode prev = head;
+        ListNode curr = head.next;
+
+        while(curr != null && curr.next != null) {
+            ListNode next = curr.next;
+            curr.next = curr.next.next;
+            next.next = prev.next;
+            prev.next = next;
+            prev = prev.next;
+            curr = curr.next;
+        }
+
+        return head;
+
+    }
+
+    // LC142
+    public static ListNode detectCycle(ListNode head) {
+        if(head == null || head.next == null)
+            return head;
+
+        ListNode slow = head;
+        ListNode fast = head;
+
+        while(fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+            if(slow == fast) {
+                if(slow == head)
+                    return slow;
+                else
+                    return slow.next;
+            }
+        }
+        return null;
+    }
+
+    // LC92
+    public static ListNode reverseBetween(ListNode A, int B, int C) {
+        if (A == null || A.next == null)
+            return A;
+        ListNode prev = null;
+        ListNode curr = A;
+
+        for (int i = 1; curr != null && i < B; i++) {
+            prev = curr;
+            curr = curr.next;
+        }
+
+        ListNode start = curr;
+        ListNode end = null;
+
+        for (int i = 1; curr != null && i <= C - B + 1; i++) {
+            ListNode next = curr.next;
+            curr.next = end;
+            end = curr;
+            curr = next;
+        }
+
+        if (start != null) {
+            start.next = curr;
+            if (prev != null)
+                prev.next = end;
+            else
+                A = end;
+        }
+        return A;
+    }
+
+    // LC817
+    public static int numComponents(ListNode head, int[] nums) {
+        HashMap<Integer, Boolean> set = new HashMap<>();
+        Arrays.stream(nums).forEach(i -> set.put(i, false));
+
+        int count = 0;
+        while(head != null && head.next != null) {
+            int v1 = head.val;
+            int v2 = head.next.val;
+
+            if(set.containsKey(v1) && set.containsKey(v2) && set.get(v1) == false && set.get(v2) == false){
+                set.put(v1, true);
+                set.put(v2, true);
+                count++;
+            }
+
+            if(set.containsKey(v1) && set.containsKey(v2) && set.get(v1) == false && set.get(v2) == true){
+                set.put(v1, true);
+            }
+
+            if(set.containsKey(v1) && set.containsKey(v2) && set.get(v1) == true && set.get(v2) == false){
+                set.put(v2, true);
+            }
+
+            head = head.next;
+        }
+
+        count += set.values().stream().filter(i -> i == false).count();
+
+        return count;
+    }
+
+    // LC147
+    public static ListNode insertionSortList(ListNode head) {
+        ListNode result = new ListNode(head.val);
+
+        ListNode temp = head.next;
+        while (temp != null) {
+            ListNode temp2 = result;
+            ListNode prev = null;
+            while (temp2 != null && temp.val > temp2.val) {
+                prev = temp2;
+                temp2 = temp2.next;
+            }
+            ListNode newNode = new ListNode(temp.val);
+            if(prev == null) {
+                newNode.next = temp2;
+                result = newNode;
+            } else {
+                newNode.next = temp2;
+                prev.next = newNode;
+            }
+            temp = temp.next;
+
+        }
+
+
+        return result;
+    }
+
+
+    // LC148
+    public static ListNode sortList(ListNode head) {
+        if(head == null || head.next == null)
+            return head;
+
+        ListNode slow = head;
+        ListNode fast = head;
+
+        while(fast.next != null && fast.next.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        fast = slow.next;
+        slow.next = null;
+        slow = head;
+
+        ListNode firstHalf = sortList(slow);
+        ListNode secondHalf = sortList(fast);
+
+        return mergeTwoSortedList(firstHalf, secondHalf);
+
+    }
+
+    public static ListNode mergeTwoSortedList(ListNode head1, ListNode head2) {
+        if(head1 == null)
+            return head2;
+
+        if(head2 == null)
+            return head1;
+
+        ListNode head, tail;
+
+        if(head1.val < head2.val) {
+            head = head1;
+            tail = head1;
+            head1 = head1.next;
+        } else {
+            head = head2;
+            tail = head2;
+            head2 = head2.next;
+        }
+
+        while(head1 != null && head2 != null) {
+            if(head1.val < head2.val) {
+                tail.next = head1;
+                tail = tail.next;
+                head1 = head1.next;
+            } else {
+                tail.next = head2;
+                tail = tail.next;
+                head2 = head2.next;
+            }
+        }
+
+        if(head1 != null) {
+            tail.next = head1;
+        }
+
+        if(head2 != null) {
+            tail.next = head2;
+        }
+
+        return head;
+    }
+
+    // LC143
+    public static void reorderList(ListNode head) {
+        ListNode slow = head;
+        ListNode fast = head;
+
+        while(fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        ListNode second = slow.next;
+        slow.next = null;
+
+        slow = head;
+
+        ListNode reversedList = reverseList(second);
+
+        while (slow != null && reversedList != null) {
+            ListNode next1 = slow.next;
+            ListNode next2 = reversedList.next;
+            reversedList.next = slow.next;
+            slow.next = reversedList;
+            slow = next1;
+            reversedList = next2;
+        }
+
     }
 
     // LC21
